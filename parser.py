@@ -1,7 +1,7 @@
 csvfile = open("yield_df.csv", "r")
 data = []
 for row in csvfile.readlines():
-    if "India" in row and "\"" not in row:
+    if "\"" not in row and "Area" not in row:
         i = 0
         temp = []
         for fields in row.split(","):
@@ -12,6 +12,7 @@ for row in csvfile.readlines():
                 fields = fields[:-1]
             temp.append(fields)
         data.append(temp)
+print(data)
 crop_encoding = {}
 i = 0
 for row in data:

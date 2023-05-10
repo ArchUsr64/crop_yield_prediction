@@ -1,4 +1,4 @@
-{'Cassava': 0, 'Maize': 1, 'Potatoes': 2, 'Sorghum': 3, 'Soybeans': 4, 'Sweet potatoes': 5, 'Wheat': 6}
+{'Maize': 0, 'Potatoes': 1, 'Sorghum': 2, 'Soybeans': 3, 'Wheat': 4, 'Cassava': 5, 'Sweet potatoes': 6, 'Plantains and others': 7, 'Yams': 8}
 Crop Type
 Yield
 Average Rainfall
