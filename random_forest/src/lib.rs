@@ -1,13 +1,13 @@
 pub struct Instance {
 	features: [i32; 4],
+	value: i32,
 }
 impl Instance {
-	pub fn new(x: i32, y: i32, z: i32, w: i32) -> Self {
-		Instance {
-			features: [x, y, z, w],
-		}
+	pub fn new(features: [i32; 4], value: i32) -> Self {
+		Instance { features, value }
 	}
 }
+
 #[derive(Clone, Debug)]
 pub enum DecisionTreeNode {
 	///The index of the feature that splitting is determined for
@@ -18,13 +18,14 @@ pub enum DecisionTreeNode {
 	},
 	Value(i32),
 }
+
 #[derive(Clone, Debug)]
 pub struct DecisionTree {
 	///The index of the feature that splitting is determined for
 	root: DecisionTreeNode,
 }
 impl DecisionTree {
-	fn traverse(&self, input: Instance) -> i32 {
+	fn traverse(&self, features: [i32; 4]) -> i32 {
 		let mut start_node = self.root.clone();
 		loop {
 			use DecisionTreeNode::*;
@@ -35,7 +36,7 @@ impl DecisionTree {
 					critical_value,
 					branch,
 				} => {
-					start_node = if input.features[feature_index] < critical_value {
+					start_node = if features[feature_index] < critical_value {
 						*branch.0
 					} else {
 						*branch.1
@@ -78,10 +79,21 @@ fn decision_tree_traversal() {
 		),
 	};
 	let tree = DecisionTree { root };
-	assert_eq!(tree.traverse(Instance::new(4, 3, 0, 0)), 0);
-	assert_eq!(tree.traverse(Instance::new(4, 10, 0, 0)), 1);
-	assert_eq!(tree.traverse(Instance::new(5, 0, 10, 0)), 2);
-	assert_eq!(tree.traverse(Instance::new(5, 0, 11, 1)), 3);
-	assert_eq!(tree.traverse(Instance::new(5, 0, 11, 2)), 4);
-	assert_eq!(tree.traverse(Instance::new(6, 0, 12, 3)), 4);
+
+	//       Decision Tree
+	//
+	//           x < 5
+	//          /     \
+	//    y < 10      z < 11
+	//   /      \    /      \
+	//  0        1  2        w < 2
+	//                      /     \
+	//                     3       4
+
+	assert_eq!(tree.traverse([4, 3, 0, 0]), 0);
+	assert_eq!(tree.traverse([4, 10, 0, 0]), 1);
+	assert_eq!(tree.traverse([5, 0, 10, 0]), 2);
+	assert_eq!(tree.traverse([5, 0, 11, 1]), 3);
+	assert_eq!(tree.traverse([5, 0, 11, 2]), 4);
+	assert_eq!(tree.traverse([6, 0, 12, 3]), 4);
 }
