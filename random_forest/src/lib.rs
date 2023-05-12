@@ -1,10 +1,7 @@
 #![allow(unused)]
-pub struct Instance {
-	feature: Features,
-	result: i32,
-}
+type Features = [i32; 4];
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Instances {
 	x: Vec<i32>,
 	y: Vec<i32>,
@@ -13,6 +10,22 @@ struct Instances {
 	result: Vec<i32>,
 }
 impl Instances {
+	fn new() -> Self {
+		Self {
+			x: Vec::new(),
+			y: Vec::new(),
+			z: Vec::new(),
+			w: Vec::new(),
+			result: Vec::new(),
+		}
+	}
+	fn add_entry(&mut self, features: Features, result: i32) {
+		self.x.push(features[0]);
+		self.y.push(features[1]);
+		self.z.push(features[2]);
+		self.w.push(features[3]);
+		self.result.push(result);
+	}
 	fn variance(&self) -> [f32; 4] {
 		fn sample_variance(data: &[i32]) -> f32 {
 			let sum_of_squares: i32 = data.iter().map(|i| i.pow(2)).sum();
@@ -58,17 +71,15 @@ impl Instances {
 		});
 		*self = sorted_instance
 	}
-	fn nth(&self, index: usize) -> Instance {
-		Instance {
-			feature: [self.x[index], self.y[index], self.z[index], self.w[index]],
-			result: self.result[index],
-		}
+	fn nth(&self, index: usize) -> (Features, i32) {
+		(
+			[self.x[index], self.y[index], self.z[index], self.w[index]],
+			self.result[index],
+		)
 	}
-
 	fn len(&self) -> usize {
 		self.result.len()
 	}
-
 	fn split_at(&self, split_index: usize) -> (Self, Self) {
 		let x = self.x.split_at(split_index);
 		let y = self.y.split_at(split_index);
@@ -94,8 +105,6 @@ impl Instances {
 	}
 }
 
-type Features = [i32; 4];
-
 #[derive(Clone, Debug)]
 pub enum DecisionTreeNode {
 	///The index of the feature that splitting is determined for
@@ -106,7 +115,6 @@ pub enum DecisionTreeNode {
 	},
 	Value(i32),
 }
-
 impl DecisionTreeNode {
 	fn traverse(&self, features: Features) -> i32 {
 		let mut start_node = self.clone();
@@ -128,8 +136,7 @@ impl DecisionTreeNode {
 			}
 		}
 	}
-
-	fn construct(instances: &mut Instances) -> Self {
+	fn construct(instances: &Instances) -> Self {
 		let len = instances.len();
 		if len == 1 {
 			return Self::Value(instances.result[0]);
@@ -141,11 +148,12 @@ impl DecisionTreeNode {
 			.collect::<Vec<_>>();
 		feature_variance.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 		let most_varied_feature_index = feature_variance[0].0;
+		let mut instances = instances.clone();
 		instances.sort_by_feature(most_varied_feature_index);
 		let (mut left, mut right) = instances.split_at(len / 2);
 		let root = Self::SplitPoint {
 			feature_index: most_varied_feature_index,
-			critical_value: instances.nth(len / 2).feature[most_varied_feature_index],
+			critical_value: instances.nth(len / 2).0[most_varied_feature_index],
 			branch: (
 				Box::new(Self::construct(&mut left)),
 				Box::new(Self::construct(&mut right)),
@@ -157,14 +165,13 @@ impl DecisionTreeNode {
 
 #[test]
 fn decision_tree_construction() {
-	let mut instances = Instances {
-		x: vec![1, 2, 3, 4, 5],
-		y: vec![5, 6, 7, 8, 50],
-		z: vec![9, 0, 1, 2, 10],
-		w: vec![3, 4, 5, 6, 3],
-		result: vec![7, 8, 9, 0, -10],
-	};
-	let root = DecisionTreeNode::construct(&mut instances);
+	let mut instances = Instances::new();
+	instances.add_entry([1, 5, 9, 3], 7);
+	instances.add_entry([2, 6, 0, 4], 8);
+	instances.add_entry([3, 7, 1, 5], 9);
+	instances.add_entry([4, 8, 2, 6], 0);
+	instances.add_entry([7, 50, 10, 3], -10);
+	let root = DecisionTreeNode::construct(&instances);
 	(0..instances.len()).for_each(|i| {
 		assert_eq!(
 			root.traverse([
@@ -176,6 +183,7 @@ fn decision_tree_construction() {
 			instances.result[i]
 		)
 	});
+	panic!("{instances:#?}");
 	// panic!("{root:#?}");
 }
 
