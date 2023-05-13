@@ -1,8 +1,10 @@
 #![allow(unused)]
-type Features = [i32; 4];
+pub mod forest;
+pub use self::forest::*;
+pub type Features = [i32; 4];
 
 #[derive(Clone, Debug)]
-struct Instances {
+pub struct Instances {
 	x: Vec<i32>,
 	y: Vec<i32>,
 	z: Vec<i32>,
@@ -10,7 +12,7 @@ struct Instances {
 	result: Vec<i32>,
 }
 impl Instances {
-	fn new() -> Self {
+	pub fn new() -> Self {
 		Self {
 			x: Vec::new(),
 			y: Vec::new(),
@@ -19,7 +21,7 @@ impl Instances {
 			result: Vec::new(),
 		}
 	}
-	fn add_entry(&mut self, features: Features, result: i32) {
+	pub fn add_entry(&mut self, features: Features, result: i32) {
 		self.x.push(features[0]);
 		self.y.push(features[1]);
 		self.z.push(features[2]);
@@ -28,8 +30,9 @@ impl Instances {
 	}
 	fn variance(&self) -> [f32; 4] {
 		fn sample_variance(data: &[i32]) -> f32 {
-			let sum_of_squares: i32 = data.iter().map(|i| i.pow(2)).sum();
-			let square_of_sum: i32 = data.iter().sum::<i32>().pow(2);
+			// println!("{data:#?}");
+			let sum_of_squares: i64 = data.iter().map(|i| (*i as i64).pow(2)).sum();
+			let square_of_sum: i64 = data.iter().map(|i| *i as i64).sum::<i64>().pow(2);
 			let n: f32 = data.len() as f32;
 			(sum_of_squares as f32 - (square_of_sum as f32 / n)) / (n - 1.)
 		}
@@ -71,7 +74,7 @@ impl Instances {
 		});
 		*self = sorted_instance
 	}
-	fn nth(&self, index: usize) -> (Features, i32) {
+	pub fn nth(&self, index: usize) -> (Features, i32) {
 		(
 			[self.x[index], self.y[index], self.z[index], self.w[index]],
 			self.result[index],
@@ -106,7 +109,7 @@ impl Instances {
 }
 
 #[derive(Clone, Debug)]
-pub enum DecisionTreeNode {
+enum DecisionTreeNode {
 	///The index of the feature that splitting is determined for
 	SplitPoint {
 		feature_index: usize,
