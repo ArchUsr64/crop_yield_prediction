@@ -1,4 +1,22 @@
 use random_forest::*;
+use std::{
+	io::{prelude::*, BufReader},
+	net::{TcpListener, TcpStream},
+};
+
+fn handle_connection(buf_reader: &mut BufReader<&mut TcpStream>) -> Features {
+	let mut features = [0; 4];
+	let mut buffer = String::new();
+	let _ = buf_reader.read_line(&mut buffer).unwrap();
+	buffer
+		.split_whitespace()
+		.map(|val| val.parse::<i32>().unwrap())
+		.enumerate()
+		.for_each(|(i, x)| features[i] = x);
+	println!("Received raw: '{buffer}'");
+	features
+}
+
 fn main() {
 	let file_path = "preprocessed.dat";
 	let file_str = std::fs::read_to_string(file_path).unwrap();
@@ -14,17 +32,20 @@ fn main() {
 			});
 		data_set.add_entry(features, result);
 	});
-	let forest = RandomForest::new(&data_set, 10000, 5);
-	let mut cum_error = 0f32;
-	fn cost(desired: i32, result: i32) -> f32 {
-		(desired as f32 - result as f32).powi(2) / desired as f32
-	}
-	const LEN: usize = 10000;
-	(0..LEN).for_each(|i| {
-		let (features, desired) = data_set.nth(i);
+	let forest = RandomForest::new(&data_set, 10000, 500);
+	println!("Training completed");
+
+	let listener = TcpListener::bind("127.0.0.1:1234").unwrap();
+	for stream in listener.incoming() {
+		let mut stream = stream.unwrap();
+		println!("Connection Established with {stream:?}");
+		let mut buf_reader = BufReader::new(&mut stream);
+		let features = handle_connection(&mut buf_reader);
+		println!("Received features: {features:#?}");
 		let prediction = forest.predict(features);
-		println!("Prediction: {prediction}, Desired: {desired}");
-		cum_error += cost(desired, prediction);
-	});
-	println!("Error rate: {}", cum_error / LEN as f32);
+		println!("Prediction: {prediction}\n");
+		stream
+			.write_all(format!("{prediction}").as_bytes())
+			.unwrap();
+	}
 }
